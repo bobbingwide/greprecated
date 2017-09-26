@@ -152,11 +152,12 @@ function forreal( $filename ) {
 	}
   $summ = array();
   $blanks = 0; 
-  
+  $lineno = 0;
   foreach ( $lines as $line ) {
+		$lineno++;
     $line = trim( $line );
     if ( $line != "" ) {
-      summarize( $line );
+      summarize( $line, $lineno, $filename );
     } else {
       $blanks++;
     }
@@ -360,7 +361,7 @@ function get_process_exts() {
    - matching is case insensitive
    - we prepend a blank since we search for " $grepword(" 
  */
-function summarize( $line ) {
+function summarize( $line, $lineno, $file ) {
 
 	global $grep, $counts;
 	$line = " " . strtolower( $line );
@@ -368,7 +369,7 @@ function summarize( $line ) {
 		$needle = " " . strtolower( $grepword ) . "(" ;
 		$pos = strpos( $line, $needle );
 		if ( $pos !== false ) {
-			isay( "Found $grepword in $line " );
+			isay( "$file($lineno) Found $grepword in $line " );
 			$counts[ $grepword ]++;
 			break;
 		} 
