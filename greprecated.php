@@ -185,83 +185,46 @@ function readgrep( $searchstring=null ) {
   return $grep;
 }
 
+/**
+ * Initialise $counts, $grepgroup and $groups array
+ * 
+ * We're looking for before and after so we count the number we find in each group
+ * 
+ * flh0grep.tab
+ * a 1
+ * b 2
+ */
 function initcounts() {
-	global $grep, $counts;
+	global $grep, $counts, $grepgroup, $groups;
 	$counts = array();
+	$groups = array();
 	foreach ( $grep as $grepword ) {
-		$counts[ $grepword ] = 0;
+		$grepword = trim( $grepword );
+		if ( false !== strpos( $grepword, " " ) ) {
+			list( $word, $group ) = explode( " ", $grepword ); 
+		} else {
+			$word = $grepword;
+			$group = "";
+		}
+		$counts[ $word ] = 0;
+		$groups[ $group ] = 0;
+		$grepgroup[ $word ] = $group;
 	}
 }
 
 function reportcounts() {
-	global $counts;
+	global $counts, $groups;
 	//print_r( $counts );
 		isay( "Function,Count" );
 	foreach ( $counts as $grepword => $count ) {
 		$line = "$grepword,$count";
 		isay( $line );
 	}
+	foreach ( $groups as $group => $count ) {
+		$line = "$group,$count";
+		isay( $line );
+	}
 }
-
-/*
-readgrep:
-
-  if searchstring <> '' then
-     do
-         GREP.0 = 2
-         GREP.1 = '1' searchstring
-         GREP.2 = ''
-     end
-  else 
-     do
-         grepfile = " FLH0GREP.TAB "
-         grepfile = strip( grepfile )
-         r = 0
-         do while lines( grepfile ) > 0
-            line = linein( grepfile )
-            r = r + 1
-            if words( line ) = 1 then
-               line = r strip( line )
-            GREP.r = line
-         end
-         GREP.0 = r
-         rc = close( grepfile )
-     end
-  gwords = ''
-  swords = ''
-  COUNT. = 0
-  TGREP. = 0
-  TOTALS = 0
-  TLINES = 0
-  TBLANKS = 0
-  TFOUND = 0
-  TTRIED = 0
-  TFILES = 0
-  
-  g = 1
-  do while g < GREP.0
-     parse value GREP.g with gword . .
-     if gword = '' then
-        GREP.0 = g-1
-     else
-        do
-           wp = wordpos( gword, gwords )
-           if wp = 0 then
-              do
-                 gwords = gwords gword
-                 swords = swords left( gword, 4)
-              end
-           // call isay GREP.g 
-        end
-      g = g + 1
-  end
-  call isay "Search words from" grepfile GREP.0 "(rc=" rc
-  call isay ".* Groupings" gwords
-  call isay "#found" left("Filename.ext", fnlen ) "#lines blanks" swords
-  call isay "------" copies("-",fnlen ) "------ ------" copies(" ----", words( gwords))
-return TFOUND
-
-*/
 
 
 
@@ -363,14 +326,15 @@ function get_process_exts() {
  */
 function summarize( $line, $lineno, $file ) {
 
-	global $grep, $counts;
+	global $grepgroup, $counts, $groups;
 	$line = " " . strtolower( $line );
-	foreach ( $grep as $grepword  ) {
+	foreach ( $grepgroup as $grepword => $group  ) {
 		$needle = " " . strtolower( $grepword ) . "(" ;
 		$pos = strpos( $line, $needle );
 		if ( $pos !== false ) {
 			isay( "$file($lineno) Found $grepword in $line " );
 			$counts[ $grepword ]++;
+			$groups[ $group ]++;
 			break;
 		} 
 	}
